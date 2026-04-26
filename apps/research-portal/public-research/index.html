@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HIV Cure Research Radar</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav">
+        <a class="brand" href="./" aria-label="HIV Cure Research Radar home">
+          <span class="brand-mark">H</span>
+          <span>HIV Cure Research Radar</span>
+        </a>
+        <div class="nav-actions">
+          <a href="https://europepmc.org/" target="_blank" rel="noreferrer">Europe PMC</a>
+          <a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank" rel="noreferrer">PubMed</a>
+        </div>
+      </nav>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Public read-only research view</p>
+          <h1>Latest HIV cure science, ranked by publication date.</h1>
+          <p>
+            A live public dashboard of the newest HIV cure, remission, reservoir,
+            latency, immunotherapy, and gene-therapy research indexed through Europe PMC.
+          </p>
+        </div>
+        <div class="status-panel" aria-live="polite">
+          <span class="status-label">Current selection</span>
+          <strong id="resultCount">Loading...</strong>
+          <span id="lastUpdated">Fetching latest records</span>
+        </div>
+      </section>
+    </header>
+
+    <main>
+      <section class="toolbar" aria-label="Research filters">
+        <label class="search-box">
+          <span>Refine within latest 100</span>
+          <input id="filterInput" type="search" placeholder="Search title, journal, author, keyword" />
+        </label>
+        <label class="select-box">
+          <span>Topic lens</span>
+          <select id="topicSelect">
+            <option value="all">All cure research</option>
+            <option value="reservoir">Reservoirs</option>
+            <option value="latency">Latency and reactivation</option>
+            <option value="bnab">Broadly neutralizing antibodies</option>
+            <option value="gene">Gene and cell therapy</option>
+            <option value="remission">Remission</option>
+            <option value="vaccine">Therapeutic vaccines</option>
+          </select>
+        </label>
+        <button id="refreshButton" class="icon-button" type="button" title="Refresh latest research">
+          Refresh
+        </button>
+      </section>
+
+      <section id="errorState" class="notice hidden" role="alert"></section>
+      <section id="loadingState" class="loading-grid" aria-label="Loading research results">
+        <div></div>
+        <div></div>
+        <div></div>
+      </section>
+      <section id="results" class="results" aria-label="Latest HIV cure research"></section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Metadata source:
+        <a href="https://www.ebi.ac.uk/europepmc/webservices/rest/search" target="_blank" rel="noreferrer">
+          Europe PMC REST API
+        </a>.
+        This page is informational and does not provide medical or laboratory guidance.
+      </p>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
+
