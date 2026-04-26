@@ -1,0 +1,108 @@
+{
+  "name": "simulation_run_v1",
+  "description": "Coordinate a safe abstract in-silico simulation run through policy validation, model selection, compute execution, result collection, and notification.",
+  "version": 1,
+  "schemaVersion": 2,
+  "ownerEmail": "platform-team@example.com",
+  "timeoutPolicy": "TIME_OUT_WF",
+  "timeoutSeconds": 86400,
+  "tasks": [
+    {
+      "name": "validate_simulation_safety_policy",
+      "taskReferenceName": "validateSafetyPolicy",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "simulationRequest": "${workflow.input.simulationRequest}",
+        "researcherId": "${workflow.input.researcherId}",
+        "datasetIds": "${workflow.input.datasetIds}"
+      }
+    },
+    {
+      "name": "select_approved_digital_model",
+      "taskReferenceName": "selectModel",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "modelFamily": "digital-hiv-abstract",
+        "requestedModelVersion": "${workflow.input.modelVersion}"
+      }
+    },
+    {
+      "name": "prepare_simulation_parameters",
+      "taskReferenceName": "prepareParameters",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "simulationRequest": "${workflow.input.simulationRequest}",
+        "approvedModel": "${selectModel.output.model}"
+      }
+    },
+    {
+      "name": "launch_kubernetes_simulation_job",
+      "taskReferenceName": "launchSimulationJob",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "parameterSet": "${prepareParameters.output.parameterSet}",
+        "storagePrefix": "${workflow.input.storagePrefix}",
+        "workflowId": "${workflow.workflowId}"
+      }
+    },
+    {
+      "name": "wait_for_simulation_completion",
+      "taskReferenceName": "waitForSimulation",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "jobId": "${launchSimulationJob.output.jobId}",
+        "workflowId": "${workflow.workflowId}"
+      }
+    },
+    {
+      "name": "collect_simulation_results",
+      "taskReferenceName": "collectResults",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "jobId": "${launchSimulationJob.output.jobId}",
+        "resultLocation": "${waitForSimulation.output.resultLocation}"
+      }
+    },
+    {
+      "name": "generate_research_report",
+      "taskReferenceName": "generateReport",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "results": "${collectResults.output.results}",
+        "workflowId": "${workflow.workflowId}"
+      }
+    },
+    {
+      "name": "notify_researcher",
+      "taskReferenceName": "notifyResearcher",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "researcherId": "${workflow.input.researcherId}",
+        "reportId": "${generateReport.output.reportId}",
+        "workflowId": "${workflow.workflowId}"
+      }
+    },
+    {
+      "name": "write_audit_event",
+      "taskReferenceName": "writeAuditEvent",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "eventType": "SIMULATION_RUN_COMPLETED",
+        "researcherId": "${workflow.input.researcherId}",
+        "workflowId": "${workflow.workflowId}",
+        "reportId": "${generateReport.output.reportId}"
+      }
+    }
+  ],
+  "inputParameters": [
+    "researcherId",
+    "simulationRequest",
+    "datasetIds",
+    "modelVersion",
+    "storagePrefix"
+  ],
+  "outputParameters": {
+    "reportId": "${generateReport.output.reportId}",
+    "resultLocation": "${collectResults.output.resultLocation}"
+  }
+}
