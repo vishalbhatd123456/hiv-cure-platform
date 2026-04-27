@@ -80,6 +80,11 @@ function normalizeResults(results) {
   return results
     .map((item) => {
       const id = item.pmid || item.pmcid || item.doi || item.id;
+      const source = normalizeId(item.source || "MED");
+      const recordId = normalizeId(item.id);
+      const pmid = normalizeId(item.pmid);
+      const doi = normalizeDoi(item.doi);
+
       return {
         id,
         title: cleanText(item.title) || "Untitled publication",
@@ -88,10 +93,10 @@ function normalizeResults(results) {
         authors: cleanText(item.authorString) || "Authors unavailable",
         abstractText: cleanText(item.abstractText) || "No abstract is available from the public metadata response.",
         citedByCount: Number(item.citedByCount || 0),
-        doi: item.doi,
-        pmid: item.pmid,
+        doi,
+        pmid,
         pmcid: item.pmcid,
-        europePmcUrl: `https://europepmc.org/article/${item.source || "MED"}/${item.id}`,
+        europePmcUrl: `https://europepmc.org/article/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}`,
         tags: inferTags(`${item.title ?? ""} ${item.abstractText ?? ""}`),
       };
     })
@@ -155,12 +160,12 @@ function renderArticle(article, index) {
     : article.abstractText;
 
   const links = [
-    `<a href="${article.europePmcUrl}" target="_blank" rel="noreferrer">Europe PMC</a>`,
+    `<a href="${escapeAttribute(article.europePmcUrl)}" target="_blank" rel="noreferrer">Europe PMC</a>`,
     article.pmid
-      ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/" target="_blank" rel="noreferrer">PubMed</a>`
+      ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${escapeAttribute(article.pmid)}/" target="_blank" rel="noreferrer">PubMed</a>`
       : "",
     article.doi
-      ? `<a href="https://doi.org/${article.doi}" target="_blank" rel="noreferrer">DOI</a>`
+      ? `<a href="https://doi.org/${escapeAttribute(encodeURIComponent(article.doi))}" target="_blank" rel="noreferrer">DOI</a>`
       : "",
   ].filter(Boolean);
 
@@ -172,7 +177,7 @@ function renderArticle(article, index) {
         <span>${escapeHtml(article.journal)}</span>
         <span>${article.citedByCount} citations</span>
       </div>
-      <h2><a href="${article.europePmcUrl}" target="_blank" rel="noreferrer">${escapeHtml(article.title)}</a></h2>
+      <h2><a href="${escapeAttribute(article.europePmcUrl)}" target="_blank" rel="noreferrer">${escapeHtml(article.title)}</a></h2>
       <p><strong>${escapeHtml(article.authors)}</strong></p>
       <p>${escapeHtml(abstract)}</p>
       <div class="tag-row">${article.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}</div>
@@ -202,6 +207,24 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function escapeAttribute(value) {
+  return escapeHtml(value).replaceAll("`", "&#096;");
+}
+
+function normalizeId(value) {
+  return String(value ?? "")
+    .replace(/[^A-Za-z0-9._:-]/g, "")
+    .slice(0, 128);
+}
+
+function normalizeDoi(value) {
+  const doi = String(value ?? "").trim();
+  if (!/^10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i.test(doi)) {
+    return "";
+  }
+  return doi.slice(0, 256);
+}
+
 elements.filter.addEventListener("input", (event) => {
   state.filter = event.target.value;
   render();
@@ -215,4 +238,3 @@ elements.topic.addEventListener("change", (event) => {
 elements.refresh.addEventListener("click", fetchResearch);
 
 fetchResearch();
-
